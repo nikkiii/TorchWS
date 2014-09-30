@@ -1,11 +1,12 @@
 package io.torch.template;
 
-import freemarker.template.TemplateException;
+import com.mitchellbosecke.pebble.error.PebbleException;
 import java.io.IOException;
+import java.util.Map;
 
 public interface TemplateManager {
 
-    public boolean isTemplateExist(String templateName) throws IOException;
+    public boolean templateExists(String templateName) throws IOException, PebbleException;
 
-    public String processTemplate(String templateName, Object templateData) throws TemplateException, IOException;
+    public String processTemplate(String templateName, Map<String, Object> templateData) throws PebbleException, IOException;
 }

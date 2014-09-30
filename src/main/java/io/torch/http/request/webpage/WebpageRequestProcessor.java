@@ -1,6 +1,6 @@
 package io.torch.http.request.webpage;
 
-import freemarker.template.TemplateException;
+import com.mitchellbosecke.pebble.error.PebbleException;
 import io.netty.buffer.Unpooled;
 import io.netty.channel.ChannelFutureListener;
 import io.netty.channel.ChannelHandlerContext;
@@ -59,7 +59,7 @@ public class WebpageRequestProcessor extends RequestProcessor {
             FullHttpResponse fullresponse = this.buildFullHttpResponse(ctx, torchRequest, torchResponse, webpage);
 
             this.writeResponse(ctx, torchRequest, fullresponse);
-        } catch (InstantiationException | IllegalAccessException | IllegalArgumentException | InvocationTargetException | IOException | TemplateException ex) {
+        } catch (InstantiationException | IllegalAccessException | IllegalArgumentException | InvocationTargetException | IOException | PebbleException ex) {
             Logger.getLogger(WebpageRequestProcessor.class.getName()).log(Level.SEVERE, null, ex);
 
             sendErrorResponse(ctx, HttpResponseStatus.INTERNAL_SERVER_ERROR, torchRequest);
@@ -82,7 +82,7 @@ public class WebpageRequestProcessor extends RequestProcessor {
         return session;
     }
 
-    private FullHttpResponse buildFullHttpResponse(ChannelHandlerContext ctx, TorchHttpRequest torchRequest, TorchHttpResponse torchResponse, WebPage webpage) throws IOException, TemplateException, IllegalArgumentException, IllegalAccessException {
+    private FullHttpResponse buildFullHttpResponse(ChannelHandlerContext ctx, TorchHttpRequest torchRequest, TorchHttpResponse torchResponse, WebPage webpage) throws IOException, PebbleException, IllegalArgumentException, IllegalAccessException {
         FullHttpResponse fullresponse = this.processTemplate(ctx, torchResponse, webpage);
 
         handleKeepAliveHeader(torchRequest, fullresponse);
@@ -109,12 +109,12 @@ public class WebpageRequestProcessor extends RequestProcessor {
         return fullresponse;
     }
 
-    private FullHttpResponse processTemplate(ChannelHandlerContext ctx, TorchHttpResponse torchResponse, WebPage webpage) throws IOException, TemplateException, IllegalArgumentException, IllegalAccessException {
+    private FullHttpResponse processTemplate(ChannelHandlerContext ctx, TorchHttpResponse torchResponse, WebPage webpage) throws IOException, IllegalArgumentException, IllegalAccessException, PebbleException {
         TemplateManager templateManager = (TemplateManager) ctx.channel().attr(ChannelVariable.TEMPLATE_MANAGER.getVariableKey()).get();
         FullHttpResponse fullresponse;
 
         if (torchResponse.getStatus() instanceof ServerErrorResponseStatus || torchResponse.getStatus() instanceof ClientErrorResponseStatus) {
-            if (templateManager.isTemplateExist("error/" + torchResponse.getStatus().getStatusCode() + ".tpl")) {
+            if (templateManager.templateExists("error/" + torchResponse.getStatus().getStatusCode() + ".tpl")) {
                 fullresponse = new DefaultFullHttpResponse(HttpVersion.HTTP_1_1, HttpResponseStatus.valueOf(torchResponse.getStatus().getStatusCode()), Unpooled.copiedBuffer(templateManager.processTemplate("error/" + torchResponse.getStatus().getStatusCode() + ".tpl", null), CharsetUtil.UTF_8));
             } else {
                 fullresponse = new DefaultFullHttpResponse(HttpVersion.HTTP_1_1, HttpResponseStatus.valueOf(torchResponse.getStatus().getStatusCode()), Unpooled.copiedBuffer("Error " + torchResponse.getStatus().getStatusCode(), CharsetUtil.UTF_8));
@@ -122,20 +122,28 @@ public class WebpageRequestProcessor extends RequestProcessor {
         } else {
             //Generate the template
             if (webpage.getClass().isAnnotationPresent(Templateable.class)) {
-                fullresponse = new DefaultFullHttpResponse(HttpVersion.HTTP_1_1, HttpResponseStatus.valueOf(torchResponse.getStatus().getStatusCode()), Unpooled.copiedBuffer(templateManager.processTemplate(webpage.getClass().getAnnotation(Templateable.class).path(), templateRootLocator.locateTemplateRoot(webpage)), CharsetUtil.UTF_8));
+                fullresponse = new DefaultFullHttpResponse(
+					HttpVersion.HTTP_1_1,
+					HttpResponseStatus.valueOf(torchResponse.getStatus().getStatusCode()),
+					Unpooled.copiedBuffer(templateManager.processTemplate(webpage.getClass().getAnnotation(Templateable.class).path(), torchResponse.getTemplateData()), CharsetUtil.UTF_8)
+				);
             } else {
-                fullresponse = new DefaultFullHttpResponse(HttpVersion.HTTP_1_1, HttpResponseStatus.valueOf(torchResponse.getStatus().getStatusCode()), Unpooled.copiedBuffer(torchResponse.getContent(), CharsetUtil.UTF_8));
+                fullresponse = new DefaultFullHttpResponse(
+					HttpVersion.HTTP_1_1,
+					HttpResponseStatus.valueOf(torchResponse.getStatus().getStatusCode()),
+					Unpooled.copiedBuffer(torchResponse.getContent(), CharsetUtil.UTF_8)
+				);
             }
         }
 
         return fullresponse;
     }
 
-    private void writeResponse(ChannelHandlerContext ctx, TorchHttpRequest torchRequest, FullHttpResponse fullresponse) {
+    private void writeResponse(ChannelHandlerContext ctx, TorchHttpRequest torchRequest, FullHttpResponse fullResponse) {
         if (!torchRequest.isKeepAlive()) {
-            ctx.writeAndFlush(fullresponse).addListener(ChannelFutureListener.CLOSE);
+            ctx.writeAndFlush(fullResponse).addListener(ChannelFutureListener.CLOSE);
         } else {
-            ctx.writeAndFlush(fullresponse);
+            ctx.writeAndFlush(fullResponse);
         }
     }
 

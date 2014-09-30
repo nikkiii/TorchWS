@@ -17,11 +17,11 @@
     </head>
     <body>
         <div style="width:640px;margin:auto;" class="alert alert-info">
-            <#if isLoggedIn>
-                Welcome on our awesome website dear <b>${username}</b>! You are officially logged in! :) Logout <a href="/logout">here!</a>
-            <#else>
+            {% if loggedIn %}
+                Welcome on our awesome website dear <b>{{ username }}</b>! You are officially logged in! :) Logout <a href="/logout">here!</a>
+            {% else %}
                 Welcome on our awesome website! Please login <a href="/login">here</a>!
-            </#if>
+            {% endif %}
         </div>
     </body>
 </html>

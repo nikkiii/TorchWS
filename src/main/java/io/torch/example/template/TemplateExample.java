@@ -7,16 +7,18 @@ import io.torch.session.Session;
 import io.torch.template.TemplateRoot;
 import io.torch.template.Templateable;
 
+import java.util.HashMap;
+import java.util.Map;
+
 @Templateable(path = "example/template/example.tpl")
 public class TemplateExample extends WebPage {
 
-    @TemplateRoot
-    public ExampleTemplateRoot templateRoot = new ExampleTemplateRoot();
-
     @Override
     public void handle(TorchHttpRequest request, TorchHttpResponse response, Session session) {
-        templateRoot.getUser().setUsername("TestUser");
-        templateRoot.getUser().setExtrainfo("You think that Laxika is the best guy ever!");
+		Map<String, Object> data = new HashMap<>();
+		data.put("username", "Meow");
+		data.put("extrainfo", "ME-YOW");
+		response.setTemplateData("user", data);
     }
 
 }

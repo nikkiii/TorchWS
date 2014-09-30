@@ -7,11 +7,15 @@ import io.torch.http.response.status.RedirectionResponseStatus;
 import io.torch.http.response.status.ResponseStatus;
 import io.torch.http.response.status.SuccessfulResponseStatus;
 
+import java.util.HashMap;
+import java.util.Map;
+
 public class TorchHttpResponse {
 
     private final ReadWriteCookieStorage cookieStorage = new ReadWriteCookieStorage();
     private final ReadWriteHeaderStorage headerStorage = new ReadWriteHeaderStorage();
     private final StringBuilder content = new StringBuilder();
+	private final Map<String, Object> templateData = new HashMap<>();
     private ResponseStatus status = SuccessfulResponseStatus.OK;
     private String contentType = "text/html; charset=UTF-8";
 
@@ -60,4 +64,12 @@ public class TorchHttpResponse {
         //Add the location header
         headerStorage.setHeader(Names.LOCATION, target);
     }
+
+	public Map<String, Object> getTemplateData() {
+		return templateData;
+	}
+
+	public void setTemplateData(String key, Object value) {
+		templateData.put(key, value);
+	}
 }
