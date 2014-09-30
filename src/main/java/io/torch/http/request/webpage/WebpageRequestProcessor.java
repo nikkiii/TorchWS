@@ -23,8 +23,6 @@ import io.torch.http.response.status.ServerErrorResponseStatus;
 import io.torch.session.Session;
 import io.torch.session.SessionManager;
 import io.torch.template.TemplateManager;
-import io.torch.template.TemplateRootLocator;
-import io.torch.template.Templateable;
 import io.torch.util.ChannelVariable;
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
@@ -33,12 +31,6 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 public class WebpageRequestProcessor extends RequestProcessor {
-
-    private final TemplateRootLocator templateRootLocator;
-
-    public WebpageRequestProcessor() {
-        templateRootLocator = new TemplateRootLocator();
-    }
 
     @Override
     public void processRequest(ChannelHandlerContext ctx, TorchHttpRequest torchRequest, TorchHttpResponse torchResponse) {
@@ -121,11 +113,11 @@ public class WebpageRequestProcessor extends RequestProcessor {
             }
         } else {
             //Generate the template
-            if (webpage.getClass().isAnnotationPresent(Templateable.class)) {
+            if (torchResponse.isTemplate()) {
                 fullresponse = new DefaultFullHttpResponse(
 					HttpVersion.HTTP_1_1,
 					HttpResponseStatus.valueOf(torchResponse.getStatus().getStatusCode()),
-					Unpooled.copiedBuffer(templateManager.processTemplate(webpage.getClass().getAnnotation(Templateable.class).path(), torchResponse.getTemplateData()), CharsetUtil.UTF_8)
+					Unpooled.copiedBuffer(templateManager.processTemplate(torchResponse.getTemplate(), torchResponse.getTemplateData()), CharsetUtil.UTF_8)
 				);
             } else {
                 fullresponse = new DefaultFullHttpResponse(

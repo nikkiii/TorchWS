@@ -9,17 +9,21 @@ import io.torch.http.response.status.SuccessfulResponseStatus;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
 
 public class TorchHttpResponse {
 
     private final ReadWriteCookieStorage cookieStorage = new ReadWriteCookieStorage();
     private final ReadWriteHeaderStorage headerStorage = new ReadWriteHeaderStorage();
     private final StringBuilder content = new StringBuilder();
+
+	private Optional<String> template = Optional.empty();
 	private final Map<String, Object> templateData = new HashMap<>();
+
     private ResponseStatus status = SuccessfulResponseStatus.OK;
     private String contentType = "text/html; charset=UTF-8";
 
-    public void appendContent(String text) {
+	public void appendContent(String text) {
         content.append(text);
     }
 
@@ -69,7 +73,27 @@ public class TorchHttpResponse {
 		return templateData;
 	}
 
-	public void setTemplateData(String key, Object value) {
+	public void templateData(String key, Object value) {
 		templateData.put(key, value);
+	}
+
+	public void template(String template) {
+		template(template, null);
+	}
+
+	public void template(String template, Map<String, Object> templateData) {
+		this.template = Optional.of(template);
+
+		if (templateData != null) {
+			this.templateData.putAll(templateData);
+		}
+	}
+
+	public String getTemplate() {
+		return template.get();
+	}
+
+	public boolean isTemplate() {
+		return template.isPresent();
 	}
 }

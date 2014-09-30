@@ -5,9 +5,7 @@ import io.torch.http.request.RequestMethod;
 import io.torch.http.request.TorchHttpRequest;
 import io.torch.http.response.TorchHttpResponse;
 import io.torch.session.Session;
-import io.torch.template.Templateable;
 
-@Templateable(path = "example/login/login.tpl")
 public class LoginPage extends WebPage {
 
     @Override
@@ -26,5 +24,7 @@ public class LoginPage extends WebPage {
                 response.redirect("/");
             }
         }
+
+		response.template("example/login/login.tpl");
     }
 }
